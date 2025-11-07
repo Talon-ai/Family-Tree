@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive 50-Member Family Tree</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Use Inter font -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7;
+            padding: 1rem;
+        }
+
+        /* --- Pure CSS Tree Styling --- */
+        .tree-root ul {
+            padding-top: 20px;
+            position: relative;
+            transition: all 0.5s;
+        }
+
+        .tree-root li {
+            text-align: center;
+            list-style-type: none;
+            position: relative;
+            padding: 20px 5px 0 5px;
+            transition: all 0.5s;
+        }
+
+        .tree-root li::before, .tree-root li::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 50%;
+            border-top: 2px solid #6366f1; /* Indigo color for lines */
+            width: 50%;
+            height: 20px;
+        }
+
+        .tree-root li::after {
+            left: 50%;
+            border-left: 2px solid #6366f1;
+        }
+
+        .tree-root ul:first-child::before, .tree-root ul:last-child::after {
+            border: none;
+        }
+
+        /* Horizontal line for siblings */
+        .tree-root li:only-child::after, .tree-root li:only-child::before {
+            display: none;
+        }
+
+        .tree-root li:only-child {
+            padding-top: 0;
+        }
+
+        .tree-root li:first-child::before, .tree-root li:last-child::after {
+            border: none;
+        }
+
+        .tree-root li:last-child::before {
+            border-right: 2px solid #6366f1;
+            border-radius: 0 5px 0 0;
+        }
+
+        .tree-root li:first-child::after {
+            border-radius: 5px 0 0 0;
+        }
+
+        /* Vertical line from parent to child box */
+        .tree-root li .member-box::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            border-left: 2px solid #6366f1;
+            width: 0;
+            height: 20px;
+        }
+
+        /* Root node styling (no incoming line) */
+        .tree-root > li > .member-box::before {
+            content: none;
+        }
+
+        /* Fix for single child lists */
+        .tree-root > li > ul > li {
+            display: inline-block;
+            flex-grow: 1; /* For responsive horizontal spreading */
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <div class="max-w-7xl mx-auto p-4 md:p-8 bg-white shadow-xl rounded-xl">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Family Tree Framework (50 Members)</h1>
+
+        <!-- Tree Container: Use overflow-x-auto to handle the width of a 50-member tree -->
+        <div id="tree-container" class="overflow-x-auto p-4">
+            <div id="nodes-root" class="tree-root w-max mx-auto">
+                <!-- Tree will be rendered here by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. FAMILY DATA STRUCTURE (EDIT THIS LIST) ---
+        // This is a list of 50 members. You only need to edit the 'name' field and the
+        // 'parentId' to link members.
+        // ID must be unique. ParentId must match the ID of the parent.
+        const familyData = [
+            // Generation 1 (Root)
+            { id: 1, name: "Grand Ancestor (ID 1) - EDIT THIS", parentId: null },
+
+            // Generation 2 (Children of ID 1)
+            { id: 2, name: "A. Child 1 (ID 2)", parentId: 1 },
+            { id: 3, name: "A. Child 2 (ID 3)", parentId: 1 },
+
+            // Generation 3 (Children of ID 2 and 3)
+            { id: 4, name: "B. Grandchild 1 (ID 4)", parentId: 2 },
+            { id: 5, name: "B. Grandchild 2 (ID 5)", parentId: 2 },
+            { id: 6, name: "B. Grandchild 3 (ID 6)", parentId: 3 },
+            { id: 7, name: "B. Grandchild 4 (ID 7)", parentId: 3 },
+
+            // Generation 4 (8 members)
+            { id: 8, name: "C. Great-Grand 1 (ID 8)", parentId: 4 },
+            { id: 9, name: "C. Great-Grand 2 (ID 9)", parentId: 4 },
+            { id: 10, name: "C. Great-Grand 3 (ID 10)", parentId: 5 },
+            { id: 11, name: "C. Great-Grand 4 (ID 11)", parentId: 5 },
+            { id: 12, name: "C. Great-Grand 5 (ID 12)", parentId: 6 },
+            { id: 13, name: "C. Great-Grand 6 (ID 13)", parentId: 6 },
+            { id: 14, name: "C. Great-Grand 7 (ID 14)", parentId: 7 },
+            { id: 15, name: "C. Great-Grand 8 (ID 15)", parentId: 7 },
+
+            // Generation 5 (16 members)
+            { id: 16, name: "D. Gen 5 (ID 16)", parentId: 8 },
+            { id: 17, name: "D. Gen 5 (ID 17)", parentId: 8 },
+            { id: 18, name: "D. Gen 5 (ID 18)", parentId: 9 },
+            { id: 19, name: "D. Gen 5 (ID 19)", parentId: 9 },
+            { id: 20, name: "D. Gen 5 (ID 20)", parentId: 10 },
+            { id: 21, name: "D. Gen 5 (ID 21)", parentId: 10 },
+            { id: 22, name: "D. Gen 5 (ID 22)", parentId: 11 },
+            { id: 23, name: "D. Gen 5 (ID 23)", parentId: 11 },
+            { id: 24, name: "D. Gen 5 (ID 24)", parentId: 12 },
+            { id: 25, name: "D. Gen 5 (ID 25)", parentId: 12 },
+            { id: 26, name: "D. Gen 5 (ID 26)", parentId: 13 },
+            { id: 27, name: "D. Gen 5 (ID 27)", parentId: 13 },
+            { id: 28, name: "D. Gen 5 (ID 28)", parentId: 14 },
+            { id: 29, name: "D. Gen 5 (ID 29)", parentId: 14 },
+            { id: 30, name: "D. Gen 5 (ID 30)", parentId: 15 },
+            { id: 31, name: "D. Gen 5 (ID 31)", parentId: 15 },
+
+            // Generation 6 (19 members, Children of Gen 5 IDs 16-25, 3 children for ID 16 and 17 to reach 50 members)
+            // You can adjust the parent IDs (16-31) to change the connections below.
+            { id: 32, name: "E. Gen 6 (ID 32)", parentId: 16 },
+            { id: 33, name: "E. Gen 6 (ID 33)", parentId: 16 },
+            { id: 34, name: "E. Gen 6 (ID 34)", parentId: 17 },
+            { id: 35, name: "E. Gen 6 (ID 35)", parentId: 17 },
+            { id: 36, name: "E. Gen 6 (ID 36)", parentId: 18 },
+            { id: 37, name: "E. Gen 6 (ID 37)", parentId: 18 },
+            { id: 38, name: "E. Gen 6 (ID 38)", parentId: 19 },
+            { id: 39, name: "E. Gen 6 (ID 39)", parentId: 19 },
+            { id: 40, name: "E. Gen 6 (ID 40)", parentId: 20 },
+            { id: 41, name: "E. Gen 6 (ID 41)", parentId: 20 },
+            { id: 42, name: "E. Gen 6 (ID 42)", parentId: 21 },
+            { id: 43, name: "E. Gen 6 (ID 43)", parentId: 21 },
+            { id: 44, name: "E. Gen 6 (ID 44)", parentId: 22 },
+            { id: 45, name: "E. Gen 6 (ID 45)", parentId: 22 },
+            { id: 46, name: "E. Gen 6 (ID 46)", parentId: 23 },
+            { id: 47, name: "E. Gen 6 (ID 47)", parentId: 23 },
+            { id: 48, name: "E. Gen 6 (ID 48)", parentId: 24 },
+            { id: 49, name: "E. Gen 6 (ID 49)", parentId: 24 },
+            { id: 50, name: "E. Gen 6 (ID 50)", parentId: 25 }, // Ends here, but you can continue the pattern
+        ];
+
+        // --- 2. CONVERT FLAT DATA TO NESTED TREE OBJECT (DO NOT EDIT) ---
+        const map = {};
+        const tree = [];
+
+        // Convert the flat array to a map for quick lookups and link children to parents
+        familyData.forEach(member => {
+            map[member.id] = { ...member, children: [] };
+        });
+
+        // Build the nested tree structure
+        familyData.forEach(member => {
+            if (member.parentId !== null && map[member.parentId]) {
+                map[member.parentId].children.push(map[member.id]);
+            } else if (member.parentId === null) {
+                tree.push(map[member.id]); // Found a root node
+            }
+        });
+
+        // --- 3. RECURSIVE HTML RENDERING (DO NOT EDIT) ---
+        /**
+         * Renders the nested tree structure into HTML <ul><li> elements.
+         * @param {Object} node - The current family member object.
+         * @returns {string} The HTML string for the node and its children.
+         */
+        function renderTree(node) {
+            let childrenHtml = '';
+            if (node.children.length > 0) {
+                // Use flexbox to horizontally align children
+                childrenHtml = `<ul class="flex justify-center flex-wrap min-w-max">`;
+                node.children.forEach(child => {
+                    childrenHtml += `<li class="flex-shrink-0">${renderTree(child)}</li>`;
+                });
+                childrenHtml += `</ul>`;
+            }
+
+            // The member box styling (Tailwind classes)
+            const memberBox = `
+                <div id="node-${node.id}" class="member-box inline-block p-4 border border-indigo-300 bg-white rounded-lg shadow-md hover:shadow-lg transition duration-200 cursor-pointer min-w-[120px] mx-2">
+                    <p class="font-semibold text-indigo-700 text-sm">${node.name}</p>
+                    <p class="text-xs text-gray-500 mt-1">ID: ${node.id}</p>
+                </div>
+            `;
+
+            return `
+                <div>
+                    ${memberBox}
+                    ${childrenHtml}
+                </div>
+            `;
+        }
+
+        // --- 4. DISPLAY THE TREE (DO NOT EDIT) ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const nodesRoot = document.getElementById('nodes-root');
+            if (tree.length > 0) {
+                const rootNode = tree[0]; // Assuming a single main root
+                
+                // Root is slightly different, it needs an outer <li> wrapper to connect to the rest of the tree.
+                const rootHtml = `
+                    <ul class="flex justify-center p-0">
+                        <li class="p-0">
+                            ${renderTree(rootNode)}
+                        </li>
+                    </ul>
+                `;
+                nodesRoot.innerHTML = rootHtml;
+            } else {
+                nodesRoot.innerHTML = '<p class="text-center text-red-500">Error: No family data found.</p>';
+            }
+        });
+
+    </script>
+</body>
+</html>
